@@ -1,0 +1,32 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Each user can read/write only their own profile
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Venues are read-only for the app.
+    // To let the app auto-upload the 10 default venues ONCE (SEED_VENUES_IF_EMPTY),
+    // temporarily add:   allow create: if request.auth != null;
+    // then remove it again after the first launch.
+    match /venues/{venueId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Bookings: everyone signed-in can READ (needed for the conflict check),
+    // but only the owner can create / change / cancel their own booking.
+    match /bookings/{bookingId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.userId == resource.data.userId;
+      allow delete: if request.auth != null
+                    && resource.data.userId == request.auth.uid;
+    }
+  }
+}
