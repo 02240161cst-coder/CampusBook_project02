@@ -3,7 +3,7 @@ import { Booking, UserType, Venue } from '../types';
 import { hasConflict, pastSlotError } from '../utils/bookingLogic';
 import { parseDate } from '../utils/time';
 import { canBookVenue, getVenueCapacity } from '../utils/venueUtils';
-
+import NetInfo from '@react-native-community/netinfo';
 export interface SaveBookingInput {
   userId: string;
   /** Project II: role of the signed-in user */
@@ -35,6 +35,17 @@ export type SaveResult = { ok: true; id: string; updated: boolean } | { ok: fals
  *   3. create or update the booking
  */
 export async function saveBooking(backend: Backend, i: SaveBookingInput): Promise<SaveResult> {
+    const networkState = await NetInfo.fetch();
+
+  if (
+    networkState.isConnected === false ||
+    networkState.isInternetReachable === false
+  ) {
+    return {
+      ok: false,
+      error: 'No internet connection. Please check your internet and try again.',
+    };
+  }
   if (!canBookVenue(i.venue, i.userType))
     return { ok: false, error: 'This venue can only be booked by staff accounts' };
 

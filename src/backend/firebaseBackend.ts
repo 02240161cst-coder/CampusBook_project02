@@ -144,16 +144,22 @@ export function createFirebaseBackend(): Backend {
             snap = await getDocs(collection(db, 'venues'));
           }
           return snap.docs.map((d): Venue => {
-            const v = d.data() as any;
-            return {
-              id: d.id,
-              name: v.name ?? '',
-              location: v.location ?? '',
-              description: v.description ?? '',
-              category: v.category ?? '',
-              capacity: v.capacity ?? 0,
-            };
-          });
+  const v = d.data() as any;
+
+  // Find matching local venue details by venue name.
+  const localVenue = SEED_VENUES.find(
+    (venue) => venue.name === v.name
+  );
+
+  return {
+    id: d.id,
+    name: v.name ?? localVenue?.name ?? '',
+    location: v.location || localVenue?.location || '',
+    description: v.description || localVenue?.description || '',
+    category: v.category || localVenue?.category || '',
+    capacity: v.capacity ?? localVenue?.capacity ?? 0,
+  };
+});
         }),
     },
 
