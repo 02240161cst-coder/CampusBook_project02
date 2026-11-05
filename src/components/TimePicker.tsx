@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Platform, Pressable, Text, View } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
-import { colors } from '../theme';
+import { useTheme } from '../theme';
 import Button from './Button';
 
 interface Props {
@@ -23,6 +23,7 @@ const make = (h: number, m: number) => {
  * iOS     → spinner in a bottom sheet with a Done button.
  */
 export default function TimePicker({ visible, hour, minute, onConfirm, onCancel }: Props) {
+  const { colors, isDark } = useTheme();
   const [val, setVal] = useState(make(hour, minute));
 
   useEffect(() => {
@@ -47,7 +48,7 @@ export default function TimePicker({ visible, hour, minute, onConfirm, onCancel 
   return (
     <Modal transparent visible={visible} animationType="slide" onRequestClose={onCancel}>
       <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' }} onPress={onCancel} />
-      <View style={{ backgroundColor: colors.white, paddingBottom: 32, paddingHorizontal: 24, paddingTop: 8 }}>
+      <View style={{ backgroundColor: colors.surface, paddingBottom: 32, paddingHorizontal: 24, paddingTop: 8 }}>
         <DateTimePicker
           value={val}
           mode="time"
@@ -55,6 +56,7 @@ export default function TimePicker({ visible, hour, minute, onConfirm, onCancel 
           is24Hour={false}
           onChange={(_, d) => d && setVal(d)}
           textColor={colors.textPrimary}
+          themeVariant={isDark ? 'dark' : 'light'}
         />
         <Button title="Done" height={52} radius={16} onPress={() => onConfirm(val.getHours(), val.getMinutes())} />
         <Text style={{ height: 0 }} />

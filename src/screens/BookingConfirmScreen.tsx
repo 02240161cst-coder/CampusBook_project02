@@ -7,19 +7,20 @@ import Button from '../components/Button';
 import Card from '../components/Card';
 import Icon from '../components/Icon';
 import { RootStackParamList } from '../navigation/types';
-import { colors } from '../theme';
+import { useColors } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'BookingConfirm'>;
 
 /** activity_booking_confirm.xml + BookingConfirmActivity */
 export default function BookingConfirmScreen({ navigation, route }: Props) {
+  const colors = useColors();
   const { venueName, date, timeSlot } = route.params;
 
   const goMain = (screen: 'Home' | 'Bookings') =>
     navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'Main', params: { screen } }] }));
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.white, padding: 24, justifyContent: 'center', alignItems: 'center' }}>
+    <View style={{ flex: 1, backgroundColor: colors.surface, padding: 24, justifyContent: 'center', alignItems: 'center' }}>
       {/* bg_success_glow.xml: radial green glow behind the check mark */}
       <View style={{ width: 140, height: 140, alignItems: 'center', justifyContent: 'center' }}>
         <Svg width={140} height={140} style={{ position: 'absolute' }}>

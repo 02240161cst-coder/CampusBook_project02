@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import { Booking } from '../types';
-import { colors } from '../theme';
+import { useColors } from '../theme';
 import Button from './Button';
 import Card from './Card';
 import Icon from './Icon';
@@ -13,6 +13,7 @@ interface Props {
 
 /** item_booking.xml */
 export default function BookingCard({ booking, onManage }: Props) {
+  const colors = useColors();
   const time = booking.startTime && booking.endTime ? `${booking.startTime} - ${booking.endTime}` : '';
   return (
     <Card style={{ marginHorizontal: 16, marginVertical: 8 }} radius={16} elevationDp={2}>

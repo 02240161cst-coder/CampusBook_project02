@@ -6,19 +6,23 @@ import Button from '../components/Button';
 import Card from '../components/Card';
 import Chip from '../components/Chip';
 import Icon from '../components/Icon';
+import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
-import { colors, elevation } from '../theme';
+import { elevation, useColors } from '../theme';
 import { getVenueImage } from '../utils/venueImages';
-import { getVenueCapacity, isExclusive } from '../utils/venueUtils';
+import { canBookVenue, getVenueCapacity, isExclusive } from '../utils/venueUtils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'VenueDetails'>;
 
 /** activity_venue_details.xml + VenueDetailsActivity */
 export default function VenueDetailsScreen({ navigation, route }: Props) {
+  const colors = useColors();
   const { venue } = route.params;
   const insets = useSafeAreaInsets();
   const img = getVenueImage(venue);
   const exclusive = isExclusive(venue);
+  const { role } = useAuth();
+  const allowed = canBookVenue(venue, role);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.backgroundPage }}>
@@ -35,7 +39,7 @@ export default function VenueDetailsScreen({ navigation, route }: Props) {
             style={[
               {
                 position: 'absolute', left: 24, top: insets.top + 24, width: 48, height: 48, borderRadius: 24,
-                backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center',
+                backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center',
               },
               elevation(4),
             ]}
@@ -63,6 +67,18 @@ export default function VenueDetailsScreen({ navigation, route }: Props) {
           </View>
         </Card>
 
+        {!allowed ? (
+          <View
+            style={{
+              marginHorizontal: 24, marginTop: 16, padding: 14, borderRadius: 12, backgroundColor: colors.exclusiveBg,
+            }}
+          >
+            <Text style={{ fontSize: 14, color: colors.exclusiveRed, fontWeight: '600' }}>
+              This venue is reserved for staff. Log in with a Staff account to book it.
+            </Text>
+          </View>
+        ) : null}
+
         <Text style={{ marginLeft: 24, marginTop: 24, fontSize: 18, fontWeight: 'bold', color: colors.textPrimary }}>Description</Text>
         <Text style={{ marginHorizontal: 24, marginTop: 12, fontSize: 15, lineHeight: 15 + 8, color: colors.textSecondary }}>
           {venue.description}
@@ -70,7 +86,7 @@ export default function VenueDetailsScreen({ navigation, route }: Props) {
       </ScrollView>
 
       <Button
-        title="Book This Venue" height={64} radius={16} fontSize={16}
+        title={allowed ? 'Book This Venue' : 'Staff Access Required'} disabled={!allowed} height={64} radius={16} fontSize={16}
         style={{ margin: 24, marginBottom: 24 + Math.max(insets.bottom - 8, 0) }}
         onPress={() => navigation.navigate('SelectDate', { venue })}
       />

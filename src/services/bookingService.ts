@@ -1,10 +1,13 @@
 import { Backend } from '../backend/types';
-import { Booking, Venue } from '../types';
-import { hasConflict } from '../utils/bookingLogic';
-import { getVenueCapacity } from '../utils/venueUtils';
+import { Booking, UserType, Venue } from '../types';
+import { hasConflict, pastSlotError } from '../utils/bookingLogic';
+import { parseDate } from '../utils/time';
+import { canBookVenue, getVenueCapacity } from '../utils/venueUtils';
 
 export interface SaveBookingInput {
   userId: string;
+  /** Project II: role of the signed-in user */
+  userType: UserType;
   venue: Venue;
   date: string;
   startTime: string;
@@ -16,6 +19,8 @@ export interface SaveBookingInput {
   requirements?: string;
   /** set when editing an existing booking */
   editBookingId?: string | null;
+  /** only for tests – defaults to the current time */
+  now?: Date;
 }
 
 export type SaveResult = { ok: true; id: string; updated: boolean } | { ok: false; error: string };
@@ -23,12 +28,19 @@ export type SaveResult = { ok: true; id: string; updated: boolean } | { ok: fals
 /**
  * Port of BookingDetailsActivity.validateAndSave → checkAndSaveBooking →
  * performBooking / performUpdate:
+ *   0. (Project II) staff-only venues can only be booked by staff
  *   1. validate attendees + purpose + capacity
  *   2. read every booking for that venue+date and reject any time overlap
  *      (first-come-first-served; the booking being edited is ignored)
  *   3. create or update the booking
  */
 export async function saveBooking(backend: Backend, i: SaveBookingInput): Promise<SaveResult> {
+  if (!canBookVenue(i.venue, i.userType))
+    return { ok: false, error: 'This venue can only be booked by staff accounts' };
+
+  const slotError = pastSlotError(parseDate(i.date) ?? undefined, i.startTimeMinutes, i.now ?? new Date());
+  if (slotError) return { ok: false, error: slotError };
+
   const attendeesStr = i.attendeesText.trim();
   if (!attendeesStr) return { ok: false, error: 'Please enter number of attendees' };
   const attendees = parseInt(attendeesStr, 10);

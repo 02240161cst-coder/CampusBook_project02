@@ -3,23 +3,25 @@ import { Pressable, Text, View } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon, { IconName } from '../components/Icon';
-import { colors, elevation } from '../theme';
+import { elevation, useColors } from '../theme';
 
 const ITEMS: Record<string, { label: string; icon: IconName }> = {
   Home: { label: 'Home', icon: 'home' },
   Explore: { label: 'Search', icon: 'search' },
+  Calendar: { label: 'Calendar', icon: 'calendar' },
   Bookings: { label: 'Bookings', icon: 'bookings' },
   Profile: { label: 'Profile', icon: 'profile' },
 };
 
 /** Material 3 BottomNavigationView look: white bar, pill indicator, 4 labelled items. */
 export default function TabBar({ state, navigation }: BottomTabBarProps) {
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   return (
     <View
       style={[
         {
-          flexDirection: 'row', backgroundColor: colors.white, paddingTop: 12,
+          flexDirection: 'row', backgroundColor: colors.surface, paddingTop: 12,
           paddingBottom: Math.max(insets.bottom, 16),
         },
         elevation(8),

@@ -10,7 +10,8 @@ import Icon from '../components/Icon';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { RootStackParamList, TabParamList } from '../navigation/types';
-import { colors } from '../theme';
+import { syncReminders } from '../services/notificationService';
+import { useColors } from '../theme';
 import { Booking } from '../types';
 import { filterBookingsByTab } from '../utils/bookingLogic';
 
@@ -20,6 +21,7 @@ type Props = CompositeScreenProps<
 >;
 
 function TabLabel({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const colors = useColors();
   const [w, setW] = useState(0);
   return (
     <Pressable onPress={onPress} style={{ flex: 1, alignItems: 'center', height: 48, justifyContent: 'center' }}>
@@ -44,6 +46,7 @@ function TabLabel({ label, active, onPress }: { label: string; active: boolean; 
 
 /** fragment_my_bookings.xml + MyBookingsFragment (Upcoming / Past tabs) */
 export default function MyBookingsScreen({ navigation }: Props) {
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const toast = useToast();
@@ -57,7 +60,10 @@ export default function MyBookingsScreen({ navigation }: Props) {
       if (!user) return;
       backend.bookings
         .listByUser(user.uid)
-        .then(setAll)
+        .then((list) => {
+          setAll(list);
+          syncReminders(list).catch(() => {}); // make sure upcoming bookings have reminders
+        })
         .catch((e) => toast(`Error: ${e.message}`))
         .finally(() => setLoading(false));
     }, [user]), // eslint-disable-line react-hooks/exhaustive-deps

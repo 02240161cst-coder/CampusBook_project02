@@ -73,7 +73,7 @@ export function createMockBackend(storage: KV, latencyMs = 250): Backend {
         return toAuthUser(u);
       },
 
-      async register({ fullName, studentId, email, password }) {
+      async register({ fullName, studentId, email, password, userType }) {
         await wait();
         if (!/^\S+@\S+\.\S+$/.test(email)) throw new BackendError('The email address is badly formatted.');
         if (password.length < 6)
@@ -82,7 +82,7 @@ export function createMockBackend(storage: KV, latencyMs = 250): Backend {
         if (users.some((x) => x.email.toLowerCase() === email.toLowerCase()))
           throw new BackendError('The email address is already in use by another account.');
         const u: StoredUser = {
-          uid: rid(), fullName, studentId, email, userType: 'Student', password,
+          uid: rid(), fullName, studentId, email, userType, password,
         };
         await write(K.users, [...users, u]);
         await storage.setItem(K.session, u.uid);
@@ -106,6 +106,16 @@ export function createMockBackend(storage: KV, latencyMs = 250): Backend {
         const { password: _pw, ...profile } = u;
         return profile;
       },
+      async update(uid, patch) {
+        await wait();
+        const users = await read<StoredUser[]>(K.users, []);
+        const next = users.map((x) => (x.uid === uid ? { ...x, ...patch } : x));
+        await write(K.users, next);
+        const u = next.find((x) => x.uid === uid);
+        if (!u) throw new BackendError('User not found');
+        const { password: _pw, ...profile } = u;
+        return profile;
+      },
     },
 
     venues: {
@@ -120,6 +130,10 @@ export function createMockBackend(storage: KV, latencyMs = 250): Backend {
         await wait();
         const all = await read<Booking[]>(K.bookings, []);
         return all.filter((b) => b.userId === uid).sort((a, b) => b.createdAt - a.createdAt);
+      },
+      async listAll() {
+        await wait();
+        return read<Booking[]>(K.bookings, []);
       },
       async get(id) {
         const all = await read<Booking[]>(K.bookings, []);

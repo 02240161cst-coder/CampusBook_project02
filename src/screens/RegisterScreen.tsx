@@ -5,15 +5,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
 import OutlinedInput from '../components/OutlinedInput';
+import RoleSelector from '../components/RoleSelector';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { RootStackParamList } from '../navigation/types';
-import { colors } from '../theme';
+import { UserType } from '../types';
+import { useColors } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
 
 /** activity_register.xml + RegisterActivity.registerUser */
 export default function RegisterScreen({ navigation }: Props) {
+  const colors = useColors();
   const { register } = useAuth();
   const toast = useToast();
   const insets = useSafeAreaInsets();
@@ -21,6 +24,7 @@ export default function RegisterScreen({ navigation }: Props) {
   const [studentId, setStudentId] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<UserType>('Student');
   const [busy, setBusy] = useState(false);
 
   const onRegister = async () => {
@@ -30,7 +34,7 @@ export default function RegisterScreen({ navigation }: Props) {
     }
     setBusy(true);
     try {
-      await register({ fullName: name.trim(), studentId: studentId.trim(), email: email.trim(), password: password.trim() });
+      await register({ fullName: name.trim(), studentId: studentId.trim(), email: email.trim(), password: password.trim(), userType: role });
       toast('Registration successful');
     } catch (e: any) {
       toast(`Registration failed: ${e.message}`, true);
@@ -53,8 +57,14 @@ export default function RegisterScreen({ navigation }: Props) {
 
         <Text style={{ marginTop: -8, fontSize: 28, fontWeight: 'bold', color: colors.textPrimary }}>Create Account</Text>
 
-        <OutlinedInput label="Full Name" value={name} onChangeText={setName} autoCapitalize="words" style={{ marginTop: 32 }} />
-        <OutlinedInput label="Student/Staff ID" value={studentId} onChangeText={setStudentId} autoCapitalize="none" style={{ marginTop: 16 }} />
+        <Text style={{ marginTop: 24, marginBottom: 8, fontSize: 14, color: colors.textSecondary }}>I am registering as a</Text>
+        <RoleSelector value={role} onChange={setRole} />
+
+        <OutlinedInput label="Full Name" value={name} onChangeText={setName} autoCapitalize="words" style={{ marginTop: 24 }} />
+        <OutlinedInput
+          label={role === 'Staff' ? 'Staff ID' : 'Student ID'} value={studentId} onChangeText={setStudentId}
+          autoCapitalize="none" style={{ marginTop: 16 }}
+        />
         <OutlinedInput
           label="Email Address" value={email} onChangeText={setEmail} keyboardType="email-address"
           autoCapitalize="none" style={{ marginTop: 16 }}

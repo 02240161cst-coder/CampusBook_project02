@@ -3,6 +3,7 @@ import { Venue } from '../types';
 export type TabParamList = {
   Home: undefined;
   Explore: undefined;
+  Calendar: undefined;
   Bookings: undefined;
   Profile: undefined;
 };
@@ -33,4 +34,5 @@ export type RootStackParamList = {
   BookingConfirm: { venueName: string; date: string; timeSlot: string };
   ManageBooking: { bookingId: string };
   Settings: undefined;
+  EditProfile: undefined;
 };

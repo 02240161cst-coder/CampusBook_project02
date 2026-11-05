@@ -1,4 +1,4 @@
-import { Venue } from '../types';
+import { Venue, UserType } from '../types';
 
 /** Port of VenueUtils.getVenueCapacity – Firestore capacity is only a fallback. */
 export function getVenueCapacity(venue: Venue): number {
@@ -27,4 +27,9 @@ export function filterVenues(venues: Venue[], query: string): Venue[] {
   return venues.filter(
     (v) => v.name.toLowerCase().includes(q) || (v.location || '').toLowerCase().includes(q),
   );
+}
+
+/** Project II role rule: "Staff Level Only" venues can only be booked by staff accounts. */
+export function canBookVenue(venue: Venue, role: UserType): boolean {
+  return !isExclusive(venue) || role === 'Staff';
 }

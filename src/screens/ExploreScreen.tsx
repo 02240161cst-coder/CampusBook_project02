@@ -9,7 +9,7 @@ import OutlinedInput from '../components/OutlinedInput';
 import VenueCard from '../components/VenueCard';
 import { useToast } from '../context/ToastContext';
 import { RootStackParamList, TabParamList } from '../navigation/types';
-import { colors } from '../theme';
+import { useColors } from '../theme';
 import { Venue } from '../types';
 import { filterVenues } from '../utils/venueUtils';
 
@@ -20,6 +20,7 @@ type Props = CompositeScreenProps<
 
 /** fragment_venue_list.xml + VenueListFragment ("Search" tab) */
 export default function ExploreScreen({ navigation }: Props) {
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const toast = useToast();
   const [all, setAll] = useState<Venue[]>([]);

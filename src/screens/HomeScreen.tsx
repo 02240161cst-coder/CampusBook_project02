@@ -11,7 +11,7 @@ import VenueCard from '../components/VenueCard';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { RootStackParamList, TabParamList } from '../navigation/types';
-import { colors } from '../theme';
+import { useColors } from '../theme';
 import { Venue } from '../types';
 import { filterVenues } from '../utils/venueUtils';
 
@@ -22,6 +22,7 @@ type Props = CompositeScreenProps<
 
 /** fragment_home.xml + HomeFragment */
 export default function HomeScreen({ navigation }: Props) {
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const { profile } = useAuth();
   const toast = useToast();

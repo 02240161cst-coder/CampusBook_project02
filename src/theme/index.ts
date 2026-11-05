@@ -1,5 +1,7 @@
 import { Platform, ViewStyle } from 'react-native';
-export { colors, outline } from './colors';
+export { colors, outline, lightColors, darkColors } from './colors';
+export type { Palette } from './colors';
+export { ThemeProvider, useTheme, useColors } from './ThemeContext';
 
 /** Corner radii from themes.xml (ShapeAppearance.CampusBook.*) */
 export const radius = { small: 8, medium: 12, large: 16 };

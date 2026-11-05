@@ -10,7 +10,7 @@ import ScreenHeader from '../components/ScreenHeader';
 import TimePicker from '../components/TimePicker';
 import { useToast } from '../context/ToastContext';
 import { RootStackParamList } from '../navigation/types';
-import { colors } from '../theme';
+import { useColors } from '../theme';
 import { HM, validateTimeRange } from '../utils/bookingLogic';
 import { formatDate, formatTime } from '../utils/time';
 
@@ -18,6 +18,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'SelectDate'>;
 
 /** activity_select_date.xml + SelectDateActivity */
 export default function SelectDateScreen({ navigation, route }: Props) {
+  const colors = useColors();
   const { venue, bookingId, isEdit, purpose, attendees, requirements } = route.params;
   const insets = useSafeAreaInsets();
   const toast = useToast();
@@ -27,7 +28,7 @@ export default function SelectDateScreen({ navigation, route }: Props) {
   const [picking, setPicking] = useState<'start' | 'end' | null>(null);
 
   const onContinue = () => {
-    const err = validateTimeRange(start, end);
+    const err = validateTimeRange(start, end, date);
     if (err || !start || !end) {
       toast(err ?? 'Please select both start and end time');
       return;

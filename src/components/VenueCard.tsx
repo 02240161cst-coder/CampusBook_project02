@@ -1,7 +1,7 @@
 import React from 'react';
 import { Image, Pressable, StyleProp, Text, View, ViewStyle } from 'react-native';
 import { Venue } from '../types';
-import { colors } from '../theme';
+import { useColors } from '../theme';
 import { getVenueCapacity, isExclusive } from '../utils/venueUtils';
 import { getVenueImage } from '../utils/venueImages';
 import Button from './Button';
@@ -17,6 +17,7 @@ interface Props {
 
 /** item_venue.xml: image, category chip, name, location, capacity, "Book Now". */
 export default function VenueCard({ venue, onPress, style }: Props) {
+  const colors = useColors();
   const exclusive = isExclusive(venue);
   const img = getVenueImage(venue);
   return (

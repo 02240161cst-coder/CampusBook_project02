@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { colors } from '../theme';
-import { startOfDay } from '../utils/time';
+import { useColors } from '../theme';
+import { formatDate, startOfDay } from '../utils/time';
 import Icon from './Icon';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -10,12 +10,15 @@ const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 interface Props {
   selected: Date;
   onSelect: (d: Date) => void;
-  /** days before this are disabled */
+  /** days before this are disabled (booking flow). Leave empty on the Calendar screen. */
   minDate?: Date;
+  /** dates (dd/MM/yyyy) that have bookings – shown with a small dot (Calendar screen) */
+  markedDates?: Set<string>;
 }
 
-/** Replacement for Android's CalendarView: white month grid, blue selected day. */
-export default function MonthCalendar({ selected, onSelect, minDate }: Props) {
+/** Replacement for Android's CalendarView: month grid, blue selected day, optional booked-day dots. */
+export default function MonthCalendar({ selected, onSelect, minDate, markedDates }: Props) {
+  const colors = useColors();
   const [view, setView] = useState({ y: selected.getFullYear(), m: selected.getMonth() });
   const today = startOfDay(new Date());
   const min = minDate ? startOfDay(minDate) : null;
@@ -35,7 +38,7 @@ export default function MonthCalendar({ selected, onSelect, minDate }: Props) {
   const canGoBack = !min || new Date(view.y, view.m, 1) > new Date(min.getFullYear(), min.getMonth(), 1);
 
   return (
-    <View style={{ backgroundColor: colors.white, paddingBottom: 8 }}>
+    <View style={{ backgroundColor: colors.surface, paddingBottom: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, height: 56 }}>
         <Pressable onPress={() => canGoBack && shift(-1)} hitSlop={8} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center', opacity: canGoBack ? 1 : 0.3 }}>
           <Icon name="back" size={22} color={colors.textPrimary} />
@@ -59,17 +62,18 @@ export default function MonthCalendar({ selected, onSelect, minDate }: Props) {
       {Array.from({ length: cells.length / 7 }, (_, row) => (
         <View key={row} style={{ flexDirection: 'row', paddingHorizontal: 8 }}>
           {cells.slice(row * 7, row * 7 + 7).map((day, i) => {
-            if (!day) return <View key={i} style={{ flex: 1, height: 44 }} />;
+            if (!day) return <View key={i} style={{ flex: 1, height: 48 }} />;
             const date = new Date(view.y, view.m, day);
             const disabled = !!min && date < min;
             const isSel = startOfDay(selected).getTime() === date.getTime();
             const isToday = today.getTime() === date.getTime();
+            const marked = !!markedDates?.has(formatDate(date));
             return (
               <Pressable
                 key={i}
                 disabled={disabled}
                 onPress={() => onSelect(date)}
-                style={{ flex: 1, height: 44, alignItems: 'center', justifyContent: 'center' }}
+                style={{ flex: 1, height: 48, alignItems: 'center', justifyContent: 'center' }}
               >
                 <View
                   style={{
@@ -89,6 +93,14 @@ export default function MonthCalendar({ selected, onSelect, minDate }: Props) {
                     {day}
                   </Text>
                 </View>
+                {marked ? (
+                  <View
+                    style={{
+                      position: 'absolute', bottom: isSel ? 9 : 2, width: 5, height: 5, borderRadius: 3,
+                      backgroundColor: isSel ? colors.white : colors.primaryBlue,
+                    }}
+                  />
+                ) : null}
               </Pressable>
             );
           })}

@@ -9,7 +9,8 @@ import Card from '../components/Card';
 import ScreenHeader from '../components/ScreenHeader';
 import { useToast } from '../context/ToastContext';
 import { RootStackParamList } from '../navigation/types';
-import { colors } from '../theme';
+import { cancelReminder, notifyBookingCancelled } from '../services/notificationService';
+import { useColors } from '../theme';
 import { Booking } from '../types';
 import { shortBookingId } from '../utils/bookingLogic';
 
@@ -17,6 +18,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'ManageBooking'>;
 
 /** activity_manage_booking.xml + ManageBookingActivity */
 export default function ManageBookingScreen({ navigation, route }: Props) {
+  const colors = useColors();
   const { bookingId } = route.params;
   const insets = useSafeAreaInsets();
   const toast = useToast();
@@ -63,6 +65,8 @@ export default function ManageBookingScreen({ navigation, route }: Props) {
   const doCancel = async () => {
     try {
       await backend.bookings.remove(bookingId);
+      cancelReminder(bookingId).catch(() => {});
+      if (booking) notifyBookingCancelled(booking).catch(() => {});
       toast('Booking cancelled successfully');
       navigation.goBack();
     } catch (e: any) {

@@ -12,16 +12,20 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { RootStackParamList } from '../navigation/types';
 import { saveBooking } from '../services/bookingService';
-import { colors } from '../theme';
+import {
+  notifyBookingConfirmed, notifyBookingUpdated, scheduleReminder,
+} from '../services/notificationService';
+import { useColors } from '../theme';
 import { getVenueImage } from '../utils/venueImages';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'BookingDetails'>;
 
 /** activity_booking_details.xml + BookingDetailsActivity */
 export default function BookingDetailsScreen({ navigation, route }: Props) {
+  const colors = useColors();
   const p = route.params;
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const toast = useToast();
   const [purpose, setPurpose] = useState(p.isEdit ? p.purpose ?? '' : '');
   const [attendees, setAttendees] = useState(p.isEdit && p.attendees ? String(p.attendees) : '');
@@ -34,6 +38,7 @@ export default function BookingDetailsScreen({ navigation, route }: Props) {
     setBusy(true);
     const res = await saveBooking(backend, {
       userId: user.uid,
+      userType: role,
       venue: p.venue,
       date: p.date,
       startTime: p.startTime,
@@ -51,6 +56,18 @@ export default function BookingDetailsScreen({ navigation, route }: Props) {
       toast(res.error, true);
       return;
     }
+    // Project II notifications (never block or fail the booking if they cannot be shown)
+    const info = {
+      id: res.id, venueName: p.venue.name, bookingDate: p.date, startTime: p.startTime,
+      endTime: p.endTime, startTimeMinutes: p.startTimeMinutes,
+    };
+    (async () => {
+      try {
+        await (res.updated ? notifyBookingUpdated(info) : notifyBookingConfirmed(info));
+        await scheduleReminder(info);
+      } catch {}
+    })();
+
     if (res.updated) {
       toast('Booking updated successfully');
       navigation.dispatch(

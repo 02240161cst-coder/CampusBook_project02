@@ -1,24 +1,26 @@
 import React from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Avatar from '../components/Avatar';
 import Card from '../components/Card';
 import Icon from '../components/Icon';
 import { useAuth } from '../context/AuthContext';
 import { RootStackParamList, TabParamList } from '../navigation/types';
-import { colors } from '../theme';
+import { useColors } from '../theme';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<TabParamList, 'Profile'>,
   NativeStackScreenProps<RootStackParamList>
 >;
 
-/** fragment_profile.xml + ProfileFragment */
+/** fragment_profile.xml + ProfileFragment  (+ Project II: photo, role, Edit Profile) */
 export default function ProfileScreen({ navigation }: Props) {
+  const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { profile, user, signOut } = useAuth();
+  const { profile, user, role, signOut } = useAuth();
 
   return (
     <ScrollView
@@ -37,19 +39,17 @@ export default function ProfileScreen({ navigation }: Props) {
       </Pressable>
 
       <View style={{ alignItems: 'center', marginTop: -8 }}>
-        <View
-          style={{
-            width: 120, height: 120, borderRadius: 60, borderWidth: 4, borderColor: colors.white,
-            alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
-          }}
-        >
-          <Icon name="profile" size={108} color={colors.black} />
-        </View>
+        <Avatar photo={profile?.photoBase64} size={120} />
         <Text style={{ marginTop: 20, fontSize: 26, fontWeight: 'bold', color: colors.textPrimary }}>
           {profile?.fullName || 'User Name'}
         </Text>
-        <View style={{ marginTop: 12, backgroundColor: colors.secondaryBlue, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 6 }}>
-          <Text style={{ fontSize: 13, fontWeight: 'bold', color: colors.primaryBlue }}>ID: {profile?.studentId ?? ''}</Text>
+        <View style={{ flexDirection: 'row', marginTop: 12, gap: 8 }}>
+          <View style={{ backgroundColor: colors.secondaryBlue, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 6 }}>
+            <Text style={{ fontSize: 13, fontWeight: 'bold', color: colors.primaryBlue }}>ID: {profile?.studentId ?? ''}</Text>
+          </View>
+          <View style={{ backgroundColor: colors.secondaryBlue, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 6 }}>
+            <Text style={{ fontSize: 13, fontWeight: 'bold', color: colors.primaryBlue }}>{role}</Text>
+          </View>
         </View>
       </View>
 
@@ -62,13 +62,16 @@ export default function ProfileScreen({ navigation }: Props) {
           <Text style={{ marginTop: 4, fontSize: 15, fontWeight: 'bold', color: colors.textPrimary }}>
             {profile?.email || user?.email || 'user@example.com'}
           </Text>
+          <View style={{ height: 1, marginVertical: 14, backgroundColor: colors.dividerGrey }} />
+          <Text style={{ fontSize: 12, color: colors.textSecondary }}>Account Type</Text>
+          <Text style={{ marginTop: 4, fontSize: 15, fontWeight: 'bold', color: colors.textPrimary }}>{role}</Text>
         </View>
       </Card>
 
       <Card radius={16} elevationDp={2} style={{ marginHorizontal: 24, marginTop: 24 }}>
         <Pressable
           android_ripple={{ color: 'rgba(0,0,0,0.06)' }}
-          onPress={() => Alert.alert('Edit Profile', 'Profile editing will be available in a future update.')}
+          onPress={() => navigation.navigate('EditProfile')}
           style={{ height: 64, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20 }}
         >
           <Icon name="profile" size={24} color={colors.primaryBlue} />

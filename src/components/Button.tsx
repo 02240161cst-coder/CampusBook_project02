@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleProp, Text, TextStyle, ViewStyle } from 'react-native';
-import { colors, outline } from '../theme';
+import { useColors } from '../theme';
 
 type Variant = 'filled' | 'outlined' | 'tonal' | 'text';
 
@@ -25,6 +25,7 @@ export default function Button({
   title, onPress, variant = 'filled', height = 56, radius = 16, fontSize = 16,
   color, borderColor, loading, disabled, style, textStyle,
 }: Props) {
+  const colors = useColors();
   const filled = variant === 'filled';
   const tonal = variant === 'tonal';
   const outlined = variant === 'outlined';
@@ -34,7 +35,7 @@ export default function Button({
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
-      android_ripple={{ color: filled ? 'rgba(255,255,255,0.25)' : 'rgba(37,99,235,0.12)' }}
+      android_ripple={{ color: filled ? 'rgba(255,255,255,0.25)' : 'rgba(59,130,246,0.15)' }}
       style={({ pressed }) => [
         {
           height,
@@ -45,7 +46,7 @@ export default function Button({
           overflow: 'hidden',
           backgroundColor: filled ? colors.primaryBlue : tonal ? colors.lightBlue : 'transparent',
           borderWidth: outlined ? 1 : 0,
-          borderColor: borderColor ?? outline,
+          borderColor: borderColor ?? colors.outline,
           opacity: disabled ? 0.5 : pressed ? 0.85 : 1,
         },
         style,

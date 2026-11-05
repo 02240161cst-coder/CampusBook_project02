@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleProp, View, ViewStyle } from 'react-native';
-import { colors, elevation } from '../theme';
+import { elevation, useColors } from '../theme';
 
 interface Props {
   radius?: number;
@@ -12,14 +12,15 @@ interface Props {
   children?: React.ReactNode;
 }
 
-/** MaterialCardView equivalent: rounded, clipped, elevated, white. */
+/** MaterialCardView equivalent: rounded, clipped, elevated, theme-aware surface. */
 export default function Card({
-  radius = 16, elevationDp = 2, bg = colors.white, borderColor, style, innerStyle, children,
+  radius = 16, elevationDp = 2, bg, borderColor, style, innerStyle, children,
 }: Props) {
+  const colors = useColors();
   return (
     <View
       style={[
-        { backgroundColor: bg, borderRadius: radius },
+        { backgroundColor: bg ?? colors.surface, borderRadius: radius },
         borderColor ? { borderWidth: 1, borderColor } : null,
         elevation(elevationDp),
         style,

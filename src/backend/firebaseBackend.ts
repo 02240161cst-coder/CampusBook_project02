@@ -25,7 +25,7 @@ import {
   where,
 } from 'firebase/firestore';
 import { SEED_VENUES_IF_EMPTY, firebaseConfig } from '../config';
-import { Booking, NewBooking, UserProfile, Venue } from '../types';
+import { Booking, NewBooking, ProfilePatch, UserProfile, Venue } from '../types';
 import { SEED_VENUES } from './seedVenues';
 import { Backend, BackendError } from './types';
 
@@ -68,6 +68,15 @@ export function createFirebaseBackend(): Backend {
   }
   const db = getFirestore(app);
 
+  const toProfile = (uid: string, d: any): UserProfile => ({
+    uid: d?.uid ?? uid,
+    fullName: d?.fullName ?? '',
+    studentId: d?.studentId ?? '',
+    email: d?.email ?? '',
+    userType: d?.userType ?? 'Student',
+    photoBase64: d?.photoBase64 || undefined,
+  });
+
   const toBooking = (id: string, d: any): Booking => ({
     id,
     userId: d.userId ?? '',
@@ -97,11 +106,11 @@ export function createFirebaseBackend(): Backend {
           return { uid: cred.user.uid, email: cred.user.email ?? email };
         }),
 
-      register: ({ fullName, studentId, email, password }) =>
+      register: ({ fullName, studentId, email, password, userType }) =>
         wrap(async () => {
           const cred = await FirebaseAuth.createUserWithEmailAndPassword(auth, email, password);
           const profile: UserProfile = {
-            uid: cred.user.uid, fullName, studentId, email, userType: 'Student',
+            uid: cred.user.uid, fullName, studentId, email, userType,
           };
           await setDoc(doc(db, 'users', profile.uid), profile);
           return { user: { uid: profile.uid, email }, profile };
@@ -114,15 +123,15 @@ export function createFirebaseBackend(): Backend {
       get: (uid) =>
         wrap(async () => {
           const snap = await getDoc(doc(db, 'users', uid));
-          if (!snap.exists()) return null;
-          const d = snap.data() as any;
-          return {
-            uid: d.uid ?? uid,
-            fullName: d.fullName ?? '',
-            studentId: d.studentId ?? '',
-            email: d.email ?? '',
-            userType: d.userType ?? 'Student',
-          };
+          return snap.exists() ? toProfile(uid, snap.data()) : null;
+        }),
+
+      update: (uid, patch: ProfilePatch) =>
+        wrap(async () => {
+          const ref = doc(db, 'users', uid);
+          await updateDoc(ref, patch as any);
+          const snap = await getDoc(ref);
+          return toProfile(uid, snap.data());
         }),
     },
 
@@ -154,6 +163,12 @@ export function createFirebaseBackend(): Backend {
           // Sorted on the client so no composite Firestore index is required.
           const snap = await getDocs(query(collection(db, 'bookings'), where('userId', '==', uid)));
           return snap.docs.map((d) => toBooking(d.id, d.data())).sort((a, b) => b.createdAt - a.createdAt);
+        }),
+
+      listAll: () =>
+        wrap(async () => {
+          const snap = await getDocs(collection(db, 'bookings'));
+          return snap.docs.map((d) => toBooking(d.id, d.data()));
         }),
 
       get: (id) =>

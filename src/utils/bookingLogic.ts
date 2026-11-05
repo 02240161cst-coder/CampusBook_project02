@@ -1,19 +1,39 @@
 import { Booking } from '../types';
-import { formatDate, parseDate } from './time';
+import { parseDate, startOfDay } from './time';
 
 export const OPEN_MINUTES = 9 * 60; //  09:00 AM
 export const CLOSE_MINUTES = 22 * 60; // 10:00 PM
 
 export interface HM { hour: number; minute: number }
 
-/** Port of SelectDateActivity.validateTimeRange – returns an error message or null. */
-export function validateTimeRange(start: HM | null, end: HM | null): string | null {
+/**
+ * Port of SelectDateActivity.validateTimeRange – returns an error message or null.
+ * Project II fix: when `date` is today, a start time that has already passed is rejected
+ * (and any earlier day is rejected too).
+ */
+export function validateTimeRange(
+  start: HM | null,
+  end: HM | null,
+  date?: Date,
+  now: Date = new Date(),
+): string | null {
   if (!start || !end) return 'Please select both start and end time';
   const s = start.hour * 60 + start.minute;
   const e = end.hour * 60 + end.minute;
   if (s < OPEN_MINUTES || s > CLOSE_MINUTES) return 'Start time must be between 09:00 AM and 10:00 PM';
   if (e < OPEN_MINUTES || e > CLOSE_MINUTES) return 'End time must be between 09:00 AM and 10:00 PM';
   if (e <= s) return 'End time must be after start time';
+  return pastSlotError(date, s, now);
+}
+
+/** "This time has already passed" check shared by the screen and the booking service. */
+export function pastSlotError(date: Date | undefined, startMinutes: number, now: Date = new Date()): string | null {
+  if (!date) return null;
+  const day = startOfDay(date).getTime();
+  const today = startOfDay(now).getTime();
+  if (day < today) return 'You cannot book a date that has already passed';
+  if (day === today && startMinutes < now.getHours() * 60 + now.getMinutes())
+    return 'This time has already passed. Please choose a later start time';
   return null;
 }
 
@@ -35,18 +55,29 @@ export function hasConflict(
   });
 }
 
-/** Port of MyBookingsFragment.filterBookings – "Upcoming" tab. */
-export function isUpcoming(b: Booking, now: Date = new Date()): boolean {
+/** The moment a booking finishes (date + end time). null if the date cannot be read. */
+function bookingEnd(b: Pick<Booking, 'bookingDate' | 'endTimeMinutes'>): Date | null {
   const d = parseDate(b.bookingDate);
-  if (!d) return true;
-  return d.getTime() > now.getTime() || b.bookingDate === formatDate(now);
+  if (!d) return null;
+  const endMin = b.endTimeMinutes > 0 ? b.endTimeMinutes : 24 * 60; // unknown end → end of day
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, endMin, 0, 0);
 }
 
-/** Port of MyBookingsFragment.filterBookings – "Past" tab. */
+/**
+ * "Upcoming" tab. Project II: a booking stays upcoming until its END TIME passes
+ * (Project I kept it upcoming until midnight).
+ */
+export function isUpcoming(b: Booking, now: Date = new Date()): boolean {
+  const end = bookingEnd(b);
+  if (!end) return true;
+  return end.getTime() > now.getTime();
+}
+
+/** "Past" tab – exactly the bookings that are no longer upcoming (unreadable dates stay upcoming). */
 export function isPast(b: Booking, now: Date = new Date()): boolean {
-  const d = parseDate(b.bookingDate);
-  if (!d) return false;
-  return d.getTime() < now.getTime() && b.bookingDate !== formatDate(now);
+  const end = bookingEnd(b);
+  if (!end) return false;
+  return end.getTime() <= now.getTime();
 }
 
 export function filterBookingsByTab(all: Booking[], tab: 0 | 1, now: Date = new Date()): Booking[] {

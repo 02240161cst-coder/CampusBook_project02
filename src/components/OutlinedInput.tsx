@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import {
   Animated, KeyboardTypeOptions, Pressable, StyleProp, TextInput, View, ViewStyle,
 } from 'react-native';
-import { colors, outline } from '../theme';
+import { useColors } from '../theme';
 import Icon, { IconName } from './Icon';
 
 interface Props {
@@ -14,10 +14,12 @@ interface Props {
   keyboardType?: KeyboardTypeOptions;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   multiline?: boolean;
+  /** read-only field (greyed out) */
+  editable?: boolean;
   /** visible height for multiline fields */
   height?: number;
   radius?: number;
-  /** colour behind the floating label (must match the screen background) */
+  /** colour behind the floating label (defaults to the page background) */
   labelBg?: string;
   style?: StyleProp<ViewStyle>;
 }
@@ -30,8 +32,9 @@ const H = 56;
  */
 export default function OutlinedInput({
   label, value, onChangeText, startIcon, secure, keyboardType, autoCapitalize = 'sentences',
-  multiline, height, radius = 16, labelBg = colors.backgroundPage, style,
+  multiline, editable = true, height, radius = 16, labelBg, style,
 }: Props) {
+  const colors = useColors();
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(!!secure);
   const floated = focused || value.length > 0;
@@ -51,19 +54,19 @@ export default function OutlinedInput({
     top: anim.interpolate({ inputRange: [0, 1], outputRange: [restTop, -9] }),
     fontSize: anim.interpolate({ inputRange: [0, 1], outputRange: [16, 12] }),
     color: focused ? colors.primaryBlue : colors.textSecondary,
-    backgroundColor: floated ? labelBg : 'transparent',
+    backgroundColor: floated ? labelBg ?? colors.backgroundPage : 'transparent',
     paddingHorizontal: floated ? 4 : 0,
     zIndex: 3,
   };
 
   return (
-    <View style={[{ height: boxH }, style]}>
+    <View style={[{ height: boxH, opacity: editable ? 1 : 0.7 }, style]}>
       {/* border is an overlay so focus (1dp → 2dp) never shifts the layout */}
       <View
         pointerEvents="none"
         style={{
           position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radius,
-          borderWidth: focused ? 2 : 1, borderColor: focused ? colors.primaryBlue : outline, zIndex: 1,
+          borderWidth: focused ? 2 : 1, borderColor: focused ? colors.primaryBlue : colors.outline, zIndex: 1,
         }}
       />
       {startIcon ? (
@@ -84,6 +87,7 @@ export default function OutlinedInput({
         autoCapitalize={autoCapitalize}
         autoCorrect={false}
         multiline={multiline}
+        editable={editable}
         textAlignVertical={multiline ? 'top' : 'center'}
         selectionColor={colors.primaryBlue}
         style={{

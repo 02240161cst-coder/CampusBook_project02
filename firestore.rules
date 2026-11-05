@@ -2,9 +2,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Each user can read/write only their own profile
+    // Each user can read/write only their own profile.
+    // Project II: a user may edit name / ID / photo, but NOT their email or account type
+    // (so a student cannot turn themselves into staff from the app).
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid;
+      allow update: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.get('userType', 'Student') == resource.data.get('userType', 'Student')
+                    && request.resource.data.get('email', '') == resource.data.get('email', '');
     }
 
     // Venues are read-only for the app.
@@ -16,8 +22,8 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Bookings: everyone signed-in can READ (needed for the conflict check),
-    // but only the owner can create / change / cancel their own booking.
+    // Bookings: everyone signed-in can READ (needed for the conflict check and the
+    // Calendar), but only the owner can create / change / cancel their own booking.
     match /bookings/{bookingId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null

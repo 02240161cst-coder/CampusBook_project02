@@ -4,20 +4,24 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../components/Button';
 import OutlinedInput from '../components/OutlinedInput';
+import RoleSelector from '../components/RoleSelector';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { RootStackParamList } from '../navigation/types';
-import { colors } from '../theme';
+import { UserType } from '../types';
+import { useColors } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 /** activity_login.xml + LoginActivity.loginUser */
 export default function LoginScreen({ navigation }: Props) {
+  const colors = useColors();
   const { signIn } = useAuth();
   const toast = useToast();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<UserType>('Student');
   const [busy, setBusy] = useState(false);
 
   const onLogin = async () => {
@@ -27,7 +31,7 @@ export default function LoginScreen({ navigation }: Props) {
     }
     setBusy(true);
     try {
-      await signIn(email.trim(), password.trim());
+      await signIn(email.trim(), password.trim(), role);
       // AuthContext switches to the app stack automatically.
     } catch (e: any) {
       toast(`Login failed: ${e.message}`);
@@ -53,16 +57,18 @@ export default function LoginScreen({ navigation }: Props) {
           <Text style={{ marginTop: 8, fontSize: 16, color: colors.textSecondary }}>Sign in to your campus account</Text>
         </View>
 
+        <RoleSelector value={role} onChange={setRole} style={{ marginTop: 32 }} />
+
         <OutlinedInput
           label="Email Address" value={email} onChangeText={setEmail} startIcon="profile"
-          keyboardType="email-address" autoCapitalize="none" style={{ marginTop: 40 }}
+          keyboardType="email-address" autoCapitalize="none" style={{ marginTop: 16 }}
         />
         <OutlinedInput
           label="Password" value={password} onChangeText={setPassword} startIcon="settings"
           secure autoCapitalize="none" style={{ marginTop: 16 }}
         />
 
-        <Button title="Login" height={60} radius={16} fontSize={18} loading={busy} onPress={onLogin} style={{ marginTop: 32 }} />
+        <Button title={`Login as ${role}`} height={60} radius={16} fontSize={18} loading={busy} onPress={onLogin} style={{ marginTop: 32 }} />
 
         <Pressable onPress={() => navigation.navigate('Register')} style={{ marginTop: 24, padding: 8, alignSelf: 'center' }}>
           <Text style={{ color: colors.primaryBlue, fontWeight: 'bold' }}>Don't have an account? Register</Text>
